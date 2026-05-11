@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dedicated Player - Custom Playlist</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #111; font-family: sans-serif; }
+        
+        /* কন্টেইনারকে দুই ভাগে ভাগ করা হয়েছে */
+        .main-container { display: flex; width: 100vw; height: 100vh; }
+
+        /* ভিডিও প্লেয়ার এরিয়া */
+        .video-box { flex: 3; position: relative; background: #000; }
+        #player { width: 100%; height: 100%; }
+
+        /* ডান পাশের প্লেলিস্ট এরিয়া */
+        .playlist-box { flex: 1; background: #222; overflow-y: auto; border-left: 2px solid #444; color: white; }
+        .playlist-header { padding: 15px; background: #333; font-weight: bold; border-bottom: 1px solid #444; }
+        
+        .playlist-item { 
+            padding: 10px; border-bottom: 1px solid #333; cursor: pointer; 
+            display: flex; align-items: center; transition: 0.3s;
+        }
+        .playlist-item:hover { background: #444; }
+        .playlist-item.active { background: #065fd4; }
+        .playlist-item img { width: 80px; margin-right: 10px; border-radius: 4px; }
+        .playlist-item span { font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* ইউটিউব বাটন ব্লক করার জন্য ইনভিজিবল লেয়ার */
+        .blocker { 
+            position: absolute; bottom: 0; right: 0; 
+            width: 150px; height: 60px; z-index: 10; cursor: default;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="video-box">
+        <div id="player"></div>
+        <div class="blocker"></div>
+    </div>
+    
+    <div class="playlist-box">
+        <div class="playlist-header">প্লেলিস্ট (সিরিয়াল অনুযায়ী)</div>
+        <div id="playlist-items"></div>
+    </div>
+</div>
+
+<script>
+    var player;
+    var playlistId = 'PL1pf33qWCkmibUP3X3Xah-vGZk0MLhu-B';
+
+    // ইউটিউব API লোড করা
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            playerVars: {
+                'listType': 'playlist',
+                'list': playlistId,
+                'autoplay': 1,
+                'modestbranding': 1,
+                'rel': 0,
+                'showinfo': 0,
+                'iv_load_policy': 3
+            },
+            events: {
+                'onReady': onPlayerReady
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        var playlist = player.getPlaylist();
+        var playlistContainer = document.getElementById('playlist-items');
+
+        // প্লেলিস্টের ভিডিওগুলো ডান দিকে সিরিয়াল অনুযায়ী সাজানো
+        // যেহেতু API সরাসরি থাম্বনেইল দেয় না, তাই আমরা ভিডিও আইডি ব্যবহার করব
+        playlist.forEach(function(videoId, index) {
+            var item = document.createElement('div');
+            item.className = 'playlist-item';
+            item.innerHTML = `
+                <img src="https://img.youtube.com/vi/${videoId}/default.jpg">
+                <span>ভিডিও ${index + 1}: লোড হচ্ছে...</span>
+            `;
+            item.onclick = function() {
+                player.playVideoAt(index);
+                highlightActive(index);
+            };
+            playlistContainer.appendChild(item);
+        });
+        highlightActive(0);
+    }
+
+    function highlightActive(index) {
+        var items = document.getElementsByClassName('playlist-item');
+        for (var i = 0; i < items.length; i++) {
+            items[i].classList.remove('active');
+        }
+        if(items[index]) items[index].classList.add('active');
+    }
+</script>
+
+</body>
+</html>
